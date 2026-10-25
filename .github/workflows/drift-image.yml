@@ -1,0 +1,28 @@
+name: drift image
+
+# sentio-drift only: builds the linux/amd64 image for mx.skarn.net and keeps
+# it as a run artifact. Nothing is pushed to a registry.
+
+on:
+  push:
+    branches: ["drift/**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: sentio-drift/sentio:0.2.0-dmarc1
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+          outputs: type=docker,dest=/tmp/sentio-image.tar
+      - run: gzip -1 /tmp/sentio-image.tar && ls -l /tmp/sentio-image.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sentio-image
+          path: /tmp/sentio-image.tar.gz
+          retention-days: 7
